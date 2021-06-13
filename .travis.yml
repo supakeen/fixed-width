@@ -1,0 +1,13 @@
+language: python
+python:
+- "3.6"
+- "3.7"
+- "3.8"
+- "3.9"
+install:
+- pip install poetry
+- poetry install
+script:
+- poetry run pytest --cov=fixed_width
+after_script:
+- bash <(curl -s https://codecov.io/bash)
