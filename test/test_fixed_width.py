@@ -2,6 +2,20 @@ import pytest
 
 import fixed_width
 
+def test_default_int8_t_to_int() -> None:
+    from fixed_width import u8
+
+    assert int(u8(1)) == 1
+    assert int(u8(16)) == 16
+    assert int(u8(128)) == 128
+
+
+def test_default_to_int_overflow() -> None:
+    from fixed_width import u8
+
+    assert int(u8(256)) == 0
+    assert int(u8(257)) == 1
+
 
 def test_c_stdint_int8_t_to_int() -> None:
     assert int(fixed_width.c_stdint.int8_t(1)) == 1
@@ -15,6 +29,7 @@ def test_c_stdint_uint8_t_to_int() -> None:
     assert int(fixed_width.c_stdint.uint8_t(128)) == 128
     assert int(fixed_width.c_stdint.uint8_t(255)) == 255
 
+
 def test_c_stdint_uint8_t_to_int_with_context() -> None:
     with fixed_width.c_stdint() as ctx:
         assert int(ctx.uint8_t(1)) == 1
@@ -25,9 +40,11 @@ def test_c_stdint_uint8_t_to_int_with_context() -> None:
         assert ctx.overflow == False
         assert ctx.promotion == False
 
+
 def test_c_stdint_uint8_t_to_int_overflow() -> None:
     assert int(fixed_width.c_stdint.uint8_t(256)) == 0
     assert int(fixed_width.c_stdint.uint8_t(257)) == 1
+
 
 def test_c_stdint_uint8_t_to_int_overflow_with_context() -> None:
     with fixed_width.c_stdint() as ctx:
@@ -41,6 +58,7 @@ def test_c_stdint_uint8_t_to_int_overflow_with_context() -> None:
 
         assert ctx.overflow == True
         assert ctx.promotion == False
+
 
 def test_c_stdint_uint16_t_to_int() -> None:
     assert int(fixed_width.c_stdint.uint16_t(1)) == 1

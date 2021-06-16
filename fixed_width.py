@@ -25,6 +25,10 @@ import enum
 from typing import Optional, Any
 
 
+class _storage(enum.Enum):
+    TWOS_COMPLEMENT = enum.auto()
+
+
 class _behavior_overflow(enum.Enum):
     EXCEPTION = enum.auto()
     TRUNCATE = enum.auto()
@@ -93,6 +97,7 @@ class _type:
     _context: Optional[_context]
     _width: int
     _behavior: _behavior
+    _storage: _storage
 
     def __init__(
         self,
@@ -103,6 +108,7 @@ class _type:
         self._width = width
         self._behavior = behavior
         self._context = context
+        self._storage = _storage.TWOS_COMPLEMENT
 
     def __call__(self, integer: int):
         return _value(self, integer, self._context)
@@ -139,3 +145,41 @@ class c_stdint(_context):
     uint16_t = _unsigned(16, _unsigned_behavior)
     uint32_t = _unsigned(32, _unsigned_behavior)
     uint64_t = _unsigned(64, _unsigned_behavior)
+
+
+class default(_context):
+    """Some default values that do generally what people expect, these mimic the
+    `c_stdint` context and are exported on the module level directly for short
+    imports."""
+
+    _signed_behavior = _behavior(
+        overflow=_behavior_overflow.TRUNCATE,
+        promotion=_behavior_promotion.EXCEPTION,
+    )
+
+    i8 = _signed(8, _signed_behavior)
+    i16 = _signed(16, _signed_behavior)
+    i32 = _signed(32, _signed_behavior)
+    i64 = _signed(64, _signed_behavior)
+
+    _unsigned_behavior = _behavior(
+        overflow=_behavior_overflow.TRUNCATE,
+        promotion=_behavior_promotion.EXCEPTION,
+    )
+
+    u8 = _unsigned(8, _unsigned_behavior)
+    u16 = _unsigned(16, _unsigned_behavior)
+    u32 = _unsigned(32, _unsigned_behavior)
+    u64 = _unsigned(64, _unsigned_behavior)
+
+
+# Exporting the `default` context for short imports.
+i8 = default.i8
+i16 = default.i16
+i32 = default.i32
+i64 = default.i64
+
+u8 = default.u8
+u16 = default.u16
+u32 = default.u32
+u64 = default.u64
