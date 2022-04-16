@@ -31,11 +31,15 @@ class _storage(enum.Enum):
 
 class _behavior_overflow(enum.Enum):
     EXCEPTION = enum.auto()
+
     TRUNCATE = enum.auto()
 
 
 class _behavior_promotion(enum.Enum):
     EXCEPTION = enum.auto()
+
+    SMALLEST = enum.auto()
+    LARGEST = enum.auto()
 
 
 class _behavior:
@@ -62,6 +66,7 @@ class _context:
         self.promotion = False
 
     def __enter__(self):
+        # xxx context should be set here on all types
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
@@ -80,10 +85,7 @@ class _value:
         self._context = context
 
     def __int__(self) -> int:
-        if self._rule._behavior.overflow == _behavior_overflow.TRUNCATE:
-            return self._integer & (2 ** self._rule._width - 1)
-        else:
-            self._integer & (2 ** self._rule._width - 1)
+        return self._integer
 
     def __repr__(self) -> str:
         return f"_value({self._integer=}, {self._rule=})"
@@ -110,8 +112,30 @@ class _type:
         self._context = context
         self._storage = _storage.TWOS_COMPLEMENT
 
+    def _fit(self, value: int):
+        """Check if a given value overflows the max storage for this type."""
+        max = 2 ** self._width - 1
+
+        if value > max:
+            print("did not fit", self._context)
+            if self._context:
+                self._content.overflow = True
+
+            if self._behavior.overflow == _behavior_overflow.EXCEPTION:
+                raise ValueError("")
+            elif self._behavior.overflow == _behavior_overflow.TRUNCATE:
+                value = value & max
+            else:
+                raise RuntimeError()
+
+        return value
+
     def __call__(self, integer: int):
-        return _value(self, integer, self._context)
+        return _value(
+            self,
+            self._fit(integer),
+            self._context
+        )
 
     def __repr__(self) -> str:
         return f"_{self.__class__.__name__}({self._width=}, {self._behavior=})"
@@ -171,6 +195,18 @@ class default(_context):
     u16 = _unsigned(16, _unsigned_behavior)
     u32 = _unsigned(32, _unsigned_behavior)
     u64 = _unsigned(64, _unsigned_behavior)
+
+
+class strict(default):
+    _signed_behavior = _behavior(
+        overflow=_behavior_overflow.EXCEPTION,
+        promotion=_behavior_promotion.EXCEPTION,
+    )
+
+    _unsigned_behavior = _behavior(
+        overflow=_behavior_overflow.EXCEPTION,
+        promotion=_behavior_promotion.EXCEPTION,
+    )
 
 
 # Exporting the `default` context for short imports.
